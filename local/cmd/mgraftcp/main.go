@@ -10,6 +10,7 @@ package main
 //
 // int client_main(int argc, char **argv);
 import "C"
+
 import (
 	"bufio"
 	"fmt"
@@ -63,7 +64,7 @@ var (
 	help        bool
 	showVersion bool
 
-	version = "v0.5"
+	version = "v0.6"
 )
 
 func init() {
@@ -119,19 +120,33 @@ func parseConfigFile(path string) error {
 				dlog.Infof("find config: %s", defaultConf)
 			}
 			path = defaultConf
-		} else { // try "/etc/graftcp-local/graftcp-local.conf"
-			etcConf := "/etc/graftcp-local/graftcp-local.conf"
-			if _, err := os.Stat(etcConf); err == nil {
-				if enableDebugLog {
-					dlog.Infof("find config: %s", etcConf)
-				}
-				path = etcConf
-			} else {
-				return nil
+			goto loadConf
+		}
+		// try $XDG_CONFIG_HOME/graftcp-local/graftcp-local.conf
+		var dotConf string
+		if xdgConfPath := os.Getenv("XDG_CONFIG_HOME"); xdgConfPath != "" {
+			dotConf = filepath.Join(xdgConfPath, "graftcp-local", "graftcp-local.conf")
+		} else if homeDir, err := os.UserHomeDir(); err == nil {
+			dotConf = filepath.Join(homeDir, ".config", "graftcp-local", "graftcp-local.conf")
+		}
+		if _, err := os.Stat(dotConf); err == nil {
+			dlog.Infof("find config: %s", dotConf)
+			path = dotConf
+			goto loadConf
+		}
+		// try "/etc/graftcp-local/graftcp-local.conf"
+		etcConf := "/etc/graftcp-local/graftcp-local.conf"
+		if _, err := os.Stat(etcConf); err == nil {
+			if enableDebugLog {
+				dlog.Infof("find config: %s", etcConf)
 			}
+			path = etcConf
+		} else {
+			return nil
 		}
 	}
 
+loadConf:
 	file, err := os.Open(path)
 	if err != nil {
 		if enableDebugLog {

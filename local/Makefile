@@ -1,5 +1,5 @@
 ifneq ($(shell echo $(VERSION) | head -c 1), v)
-	VERSION=v0.5
+	VERSION=v0.6
 endif
 
 GO_BUILD_PREFIX_FLAGS :=
@@ -30,7 +30,7 @@ graftcp-local: $(wildcard *.go cmd/graftcp-local/*.go)
 mgraftcp: $(wildcard *.go cmd/mgraftcp/*.go) ../libgraftcp.a
 	${GO_BUILD_PREFIX_FLAGS} ${CGO_FLAGS} go build -ldflags "-s -w -X main.version=${VERSION}" ./cmd/mgraftcp
 
-../libgraftcp.a:
+../libgraftcp.a::
 	$(MAKE) -C .. libgraftcp.a
 
 install:: $(TARGET)
